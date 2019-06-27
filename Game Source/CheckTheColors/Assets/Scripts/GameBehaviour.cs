@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class GameBehaviour : MonoBehaviour
 {
@@ -10,9 +11,20 @@ public class GameBehaviour : MonoBehaviour
     public Sprite[] trueSprites;
     public Sprite[] falseSprites;
     public Text yourTextIndicator;
+
+    public GameObject[] spawnManuk;
+    public GameObject[] manuk;
+
     private int yourScore;
+    private int cDown= 5;
+    private bool isStarting = false;
+
     public GameObject wrongSign;
-    public GameObject winSign,loseSign;
+    public GameObject winSign,loseSign,finishLine;
+
+    public GameObject waitPanel;
+    public Text txtInfo, txtCount;
+    
 
 
     public Button[] buttons;
@@ -26,11 +38,14 @@ public class GameBehaviour : MonoBehaviour
     {
 
 
-
+        hideButton();
+        
         yourScore = 0;
         yourTextIndicator.text = yourScore.ToString();
 
-        randomizer();
+       
+
+       // randomizer();
     }
 
     private void Update()
@@ -38,11 +53,48 @@ public class GameBehaviour : MonoBehaviour
         yourTextIndicator.text = yourScore.ToString();
 
 
+        //
+        if (PhotonNetwork.CurrentRoom.PlayerCount == 2 && isStarting == false) {
+            StartCoroutine(gameCountdown());
+            isStarting = true;
+        }
+
+
+
         if (yourScore >= 20) {
             // iki kondisi lek menang ubahen ae engko
             hideButton();
             winSign.SetActive(true);
         }
+    }
+
+    private void gameStart() {
+        // spawn
+        waitPanel.SetActive(false);
+        finishLine.SetActive(true);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            manuk[0] = PhotonNetwork.Instantiate(manuk[0].name, spawnManuk[0].transform.position, Quaternion.identity, 0);
+        }
+        else
+        {
+            manuk[1] = PhotonNetwork.Instantiate(manuk[1].name, spawnManuk[1].transform.position, Quaternion.identity, 0);
+        }
+
+        randomizer();
+    }
+
+    public void endScene(int _player) {
+
+        if (_player == 1) {
+            hideButton();
+            winSign.SetActive(true);
+        } else if (_player == 2) {
+            hideButton();
+            loseSign.SetActive(true);
+        }
+        finishLine.SetActive(false);
     }
 
     private void showButton() {
@@ -80,6 +132,14 @@ public class GameBehaviour : MonoBehaviour
         // kondisi lek metek tombol e bener
         // manuk e mlaku no 
 
+        if (PhotonNetwork.IsMasterClient)
+        {
+            manuk[0].transform.position += new Vector3(1,0,0);
+        }
+        else {
+            manuk[1].transform.position += new Vector3(1,0,0);
+        }
+
         yourScore += 1;
 
         randomizer(); 
@@ -106,6 +166,17 @@ public class GameBehaviour : MonoBehaviour
         randomizer();
 
         onWrong = false;
+    }
+
+    IEnumerator gameCountdown() {
+        txtInfo.text = "GAME WILL START IN ..";
+        do
+        {
+            txtCount.text = cDown.ToString();
+            yield return new WaitForSeconds(1f);
+            cDown -= 1;
+        } while (cDown > 0);
+        gameStart();
     }
 
 

@@ -46,7 +46,7 @@ public class MainMenu : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         StopAllCoroutines();
-        PhotonNetwork.LoadLevel("RoomScene");
+        PhotonNetwork.LoadLevel("Match");
     }
 
     IEnumerator WaitJoinRoom()
